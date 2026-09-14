@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.models import User
 from app.repository import wallets as wallets_repository
-from app.schemas import CreateWalletRequest
+from app.schemas import CreateWalletRequest, WalletResponse
 
 def get_balance(db: Session, current_user: User, wallet_name: str | None = None):
     if wallet_name is None:
@@ -17,16 +17,12 @@ def get_balance(db: Session, current_user: User, wallet_name: str | None = None)
     wallet = wallets_repository.get_wallet_balance_by_name(db, current_user.id, wallet_name)
     return {"wallet": wallet_name, "balance": wallet.balance}
 
-def create_wallet(db: Session, current_user: User, wallet: CreateWalletRequest):
+def create_wallet(db: Session, current_user: User, wallet: CreateWalletRequest) -> WalletResponse:
     if wallets_repository.is_wallet_exist(db, current_user.id, wallet.name):
         raise HTTPException(
             status_code=400,
             detail=f"Wallet '{wallet.name}' already exists"
         )
-    new_wallet = wallets_repository.create_wallet(db, current_user.id, wallet.name, wallet.initial_balance)
+    new_wallet = wallets_repository.create_wallet(db, current_user.id, wallet.name, wallet.initial_balance, wallet.currency)
     db.commit()
-    return {
-        "message": f"Wallet '{wallet.name}' created",
-        "wallet": wallet.name,
-        "balance": new_wallet.balance
-    }
+    return WalletResponse.model_validate(new_wallet)
