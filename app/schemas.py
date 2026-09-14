@@ -36,3 +36,10 @@ class CreateWalletRequest(BaseModel):
         if v < 0:
             raise ValueError("initial_balance must be positive")
         return v
+
+class UserRequest(BaseModel):
+    login: str = Field(..., max_length=127)
+
+class UserResponse(UserRequest):
+    model_config = {"from_attributes": True}
+    id: int
